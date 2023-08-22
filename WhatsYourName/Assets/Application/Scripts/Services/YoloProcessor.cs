@@ -5,6 +5,7 @@ using Unity.Barracuda;
 using Unity.VisualScripting;
 using UnityEngine;
 
+
 namespace YoloHolo.Services
 {
     [System.Runtime.InteropServices.Guid("c585457f-2408-4e23-a6e4-e76612e61058")]
@@ -12,6 +13,9 @@ namespace YoloHolo.Services
     {
         private readonly YoloProcessorProfile profile;
         private IWorker worker;
+
+        //Stopwatch 생성
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
 
         public YoloProcessor(string name, uint priority, YoloProcessorProfile profile)
             : base(name, priority)
@@ -31,15 +35,18 @@ namespace YoloHolo.Services
 
         public async Task<List<YoloItem>> RecognizeObjects(Texture2D texture)
         {
-            Debug.Log("디버깅3. RecognizeObjects 함수 - 시작");
             var inputTensor = new Tensor(texture, channels: profile.Channels);
-            Debug.Log("디버깅4. RecognizeObjects 함수 - input tensor 생성");
-            Debug.Log("디버깅4-1. RecognizeObjects 함수 - input tensor : " + inputTensor.ToString());
             await Task.Delay(32);
-            Debug.Log("디버깅5. RecognizeObjects 함수 - await 32");
+
+            stopwatch.Start();
+
             // Run the model on the input tensor
             var outputTensor = await ForwardAsync(worker, inputTensor);
-            Debug.Log("디버깅6. RecognizeObjects 함수 - ForwardASync 종료 ");
+
+            stopwatch.Stop();
+            Debug.Log("디버깅1. ForwardAsync 함수 - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
+            stopwatch.Reset();
+
             inputTensor.Dispose();
 
             var yoloItems = outputTensor.GetYoloData(profile.ClassTranslator, 
@@ -47,14 +54,13 @@ namespace YoloHolo.Services
 
             outputTensor.Dispose();
             return yoloItems;
+
         }
 
         // Nicked from https://github.com/Unity-Technologies/barracuda-release/issues/236#issue-1049168663
         public async Task<Tensor> ForwardAsync(IWorker modelWorker, Tensor inputs)
-        {
-            Debug.Log("디버깅7. ForwardAsync 함수 - 시작 ");
+        {   
             var executor = worker.StartManualSchedule(inputs);
-            Debug.Log("디버깅8. ForwardAsync 함수 - worker 작업 시작");
             var it = 0;
             bool hasMoreWork;
             do
@@ -66,7 +72,6 @@ namespace YoloHolo.Services
                     await Task.Delay(32);
                 }
             } while (hasMoreWork);
-
             return modelWorker.PeekOutput();
         }
 

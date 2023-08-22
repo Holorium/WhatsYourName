@@ -45,6 +45,9 @@ namespace YoloHolo.YoloLabeling
 
         private readonly List<YoloGameObject> yoloGameObjects = new();
 
+        //Stopwatch 생성
+        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        System.Diagnostics.Stopwatch stopwatch2 = new System.Diagnostics.Stopwatch();
 
         private void Start()
         {
@@ -68,6 +71,8 @@ namespace YoloHolo.YoloLabeling
 
             while (true)
             {
+                stopwatch.Start();
+
                 var cameraTransform = Camera.main.CopyCameraTransForm();
                 Graphics.Blit(webCamTexture, renderTexture);
                 await Task.Delay(32);
@@ -75,7 +80,9 @@ namespace YoloHolo.YoloLabeling
                 var texture = renderTexture.ToTexture2D();
                 await Task.Delay(32);
 
-                Debug.Log("디버깅1. 화면 input");
+                stopwatch.Stop();
+                Debug.Log("디버깅3. input 생성 - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
+                stopwatch.Start();
 
                 var foundObjects = await yoloProcessor.RecognizeObjects(texture);
 
@@ -84,16 +91,24 @@ namespace YoloHolo.YoloLabeling
                 ShowRecognitions(foundObjects, cameraTransform);
                 Destroy(texture);
                 Destroy(cameraTransform.gameObject);
+
+                stopwatch.Stop();
+                Debug.Log("디버깅5. While Loop - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
+                stopwatch.Reset();
+
             }
         }
 
 
         private void ShowRecognitions(List<YoloItem> recognitions, Transform cameraTransform)
         {
+            stopwatch2.Start();
             foreach (var recognition in recognitions)
             {
                 var newObj = new YoloGameObject(recognition, cameraTransform,
                     actualCameraSize, yoloImageSize, virtualProjectionPlaneWidth);
+
+                //position이 존재하고 기존 yoloGameObjects에 없는 Obj를 yoloGameObjects에 추가
                 if (newObj.PositionInSpace != null && !HasBeenSeenBefore(newObj))
                 {
                     yoloGameObjects.Add(newObj);
@@ -105,6 +120,7 @@ namespace YoloHolo.YoloLabeling
                 }
             }
 
+            //yoloGameObjects에서 생성된 지 오래된 (> labelNotSeenTimeOut =.5f = 5초) obj 제거
             for (var i = yoloGameObjects.Count - 1; i >= 0; i--)
             {
                 if (Time.time - yoloGameObjects[i].TimeLastSeen > labelNotSeenTimeOut)
@@ -113,10 +129,19 @@ namespace YoloHolo.YoloLabeling
                     yoloGameObjects.RemoveAt(i);
                 }
             }
+            stopwatch2.Stop();
+            Debug.Log("디버깅4. ShowRecognitions - 시간 : " + stopwatch2.ElapsedMilliseconds + "ms");
+            stopwatch2.Reset();
         }
 
         private bool HasBeenSeenBefore(YoloGameObject obj)
         {
+            /*
+             * yoloGameObjects에 obj와 같은(Name이 동일하고 Distance가 minIdenticalLabelDistance 이내)
+             * object가 존재하면 해당 object의 TimeLastSeen을 update하고 True 리턴
+             * 존재하지 않으면 False 리턴
+             */
+             
             var seenBefore = yoloGameObjects.FirstOrDefault(
                 ylo => ylo.Name == obj.Name &&
                 Vector3.Distance(obj.PositionInSpace.Value,

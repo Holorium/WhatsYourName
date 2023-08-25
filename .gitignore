@@ -1,4 +1,5 @@
 /**/yolov7-tiny_256x320.onnx
+/builds
 
 /**/.vs
 /**/*.sln
@@ -31,3 +32,4 @@
 /**/.vsconfig
 /**/App_BurstDebugInformation_DoNotShip
 /**/*.DotSettings
+/builds

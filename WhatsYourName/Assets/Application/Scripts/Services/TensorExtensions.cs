@@ -1,17 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Unity.Barracuda;
+using System.Threading.Tasks;
+using UnityEngine;
 
 namespace YoloHolo.Services
 {
     public static class TensorExtensions
     {
+        static System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+
         public static List<YoloItem> GetYoloData(this Tensor tensor, IYoloClassTranslator translator, 
             float minProbability, float overlapThreshold)
         {
+            Debug.Log("Debug2-3-1. Start GetYoloData");
+            sw.Start();
+
             var boxesMeetingConfidenceLevel = new List<YoloItem>();
+/*
+            Parallel.For(0, tensor.channels, (i) =>
+            {
+                Debug.Log("Debug. Parallel For"+i);
+                var yoloItem = new YoloItem(tensor, i, translator);
+                if (yoloItem.Confidence > minProbability)
+                {
+                    boxesMeetingConfidenceLevel.Add(yoloItem);
+                }
+            });
+*/
+
             for (var i = 0; i < tensor.channels; i++)
             {
                 var yoloItem = new YoloItem(tensor, i, translator);
@@ -21,6 +39,10 @@ namespace YoloHolo.Services
                 }
             }
 
+            sw.Stop();
+            Debug.Log("** GetYoloData-After First Loop: " + sw.ElapsedMilliseconds + "ms");
+            sw.Start();
+
             var result = new List<YoloItem>();
             var recognizedTypes = boxesMeetingConfidenceLevel.Select(b => b.MostLikelyObject).Distinct();
             foreach (var objType in recognizedTypes)
@@ -29,6 +51,10 @@ namespace YoloHolo.Services
                 result.AddRange(RemoveOverlappingBoxes(boxesOfThisType, overlapThreshold));
             }
 
+            Debug.Log("Debug2-3-2. End GetYoloData");
+            sw.Stop();
+            Debug.Log("** GetYoloData 시간 : " + sw.ElapsedMilliseconds + "ms");
+            sw.Reset();
             return result;
         }
 
@@ -48,7 +74,9 @@ namespace YoloHolo.Services
                 selectedBoxes.Add(currentBox);
                 boxesMeetingConfidenceLevel.RemoveAt(0);
 
-                // compare the current box with all remaining boxesMeetingsConfidenceLevel  
+                // compare the current box with all re
+                //
+                // ing boxesMeetingsConfidenceLevel  
                 for (var i = 0; i < boxesMeetingConfidenceLevel.Count; i++)
                 {
                     var otherBox = boxesMeetingConfidenceLevel[i];

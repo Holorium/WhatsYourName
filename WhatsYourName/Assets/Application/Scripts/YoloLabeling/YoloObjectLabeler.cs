@@ -67,8 +67,6 @@ namespace YoloHolo.YoloLabeling
 
             actualCameraSize = new Vector2Int(webCamTexture.width, webCamTexture.height);
             var renderTexture = new RenderTexture(yoloImageSize.x, yoloImageSize.y, 24);
-            //var renderTexture = new RenderTexture(320, 320, 24);
-            //var renderTexture = new RenderTexture(160, 160, 24);
 
             if (debugRenderer != null && debugRenderer.gameObject.activeInHierarchy)
             {
@@ -118,6 +116,7 @@ namespace YoloHolo.YoloLabeling
         private void ShowRecognitions(List<YoloItem> recognitions, Transform cameraTransform)
         {
             Debug.Log("Debug3-1. ShowRecognitions Start");
+            /*
             foreach (var recognition in recognitions)
             {
                 var newObj = new YoloGameObject(recognition, cameraTransform,
@@ -145,6 +144,29 @@ namespace YoloHolo.YoloLabeling
                     yoloGameObjects.RemoveAt(i);
                 }
             }
+            */
+
+   
+            foreach (var recognition in recognitions)
+            {
+                var newObj = new YoloGameObject(recognition, cameraTransform,
+                    actualCameraSize, yoloImageSize, virtualProjectionPlaneWidth);
+
+                //position 존재하는 Obj를 yoloGameObjects에 추가
+                if (newObj.PositionInSpace != null)
+                {
+                    yoloGameObjects.Add(newObj);
+                    newObj.DisplayObject = Instantiate(labelObject,
+                        newObj.PositionInSpace.Value, Quaternion.identity);
+                    newObj.DisplayObject.transform.parent = transform;
+                    var labelController = newObj.DisplayObject.GetComponent<ObjectLabelController>();
+                    labelController.SetText(newObj.Name);
+                    Destroy(newObj.DisplayObject, labelNotSeenTimeOut);
+                }
+            }
+
+            yoloGameObjects.Clear();
+
             Debug.Log("Debug3-2. ShowRecognitions End");
         }
 

@@ -18,12 +18,12 @@ namespace YoloHolo.Services
 
         [SerializeField]
          //private float minimumProbability = 0.65f;
-        private float minimumProbability = 0.3f;
+        private float minimumProbability = 0.4f;
         public float MinimumProbability => minimumProbability;
 
         [SerializeField]
         //private float overlapThreshold = 0.5f;
-        private float overlapThreshold = 0.65f;
+        private float overlapThreshold = 0.45f;
         public float OverlapThreshold => overlapThreshold;
 
         [SerializeField] 

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using RealityCollective.ServiceFramework.Services;
-using Unity.VisualScripting;
 using UnityEngine;
 using YoloHolo.Services;
 using YoloHolo.Utilities;
@@ -25,16 +24,19 @@ namespace YoloHolo.YoloLabeling
 
         [SerializeField]
         // private Vector2Int yoloImageSize = new(320, 256);
-        private Vector2Int yoloImageSize = new(320, 320);
+        //private Vector2Int yoloImageSize = new(320, 320);
+        private Vector2Int yoloImageSize = new(160, 160);
 
         [SerializeField]
         private float virtualProjectionPlaneWidth = 1.356f;
 
         [SerializeField]
-        private float minIdenticalLabelDistance = 0.3f;
+        //private float minIdenticalLabelDistance = 0.3f;
+        private float minIdenticalLabelDistance = 0.15f;
 
         [SerializeField]
-        private float labelNotSeenTimeOut = 5f;
+        //private float labelNotSeenTimeOut = 5f;
+        private float labelNotSeenTimeOut = 1.5f;
 
         [SerializeField]
         private Renderer debugRenderer;
@@ -45,12 +47,14 @@ namespace YoloHolo.YoloLabeling
 
         private readonly List<YoloGameObject> yoloGameObjects = new();
 
+        /*
         //Stopwatch 생성
         System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-        System.Diagnostics.Stopwatch stopwatch2 = new System.Diagnostics.Stopwatch();
+        */
 
         private void Start()
         {
+            Debug.Log("Debug0. Application Start");
             yoloProcessor = ServiceManager.Instance.GetService<IYoloProcessor>();
             webCamTexture = new WebCamTexture(requestedCameraSize.x, requestedCameraSize.y, cameraFPS);
             webCamTexture.Play();
@@ -62,8 +66,10 @@ namespace YoloHolo.YoloLabeling
             await Task.Delay(1000);
 
             actualCameraSize = new Vector2Int(webCamTexture.width, webCamTexture.height);
-            //var renderTexture = new RenderTexture(yoloImageSize.x, yoloImageSize.y, 24);
-            var renderTexture = new RenderTexture(320, 320, 24);
+            var renderTexture = new RenderTexture(yoloImageSize.x, yoloImageSize.y, 24);
+            //var renderTexture = new RenderTexture(320, 320, 24);
+            //var renderTexture = new RenderTexture(160, 160, 24);
+
             if (debugRenderer != null && debugRenderer.gameObject.activeInHierarchy)
             {
                 debugRenderer.material.mainTexture = renderTexture;
@@ -71,8 +77,9 @@ namespace YoloHolo.YoloLabeling
 
             while (true)
             {
-                stopwatch.Start();
+                //stopwatch.Start();
 
+                Debug.Log("Debug1. Loop Start");
                 var cameraTransform = Camera.main.CopyCameraTransForm();
                 Graphics.Blit(webCamTexture, renderTexture);
                 await Task.Delay(32);
@@ -80,21 +87,29 @@ namespace YoloHolo.YoloLabeling
                 var texture = renderTexture.ToTexture2D();
                 await Task.Delay(32);
 
-                stopwatch.Stop();
-                Debug.Log("디버깅3. input 생성 - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
-                stopwatch.Start();
+                Debug.Log("Debug2. Call RecognizeObjects");
+
+                //stopwatch.Stop();
+                //Debug.Log("디버깅1. input 생성 - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
+                //stopwatch.Start();
 
                 var foundObjects = await yoloProcessor.RecognizeObjects(texture);
 
-                Debug.Log("디버깅2. found Objects : " + foundObjects.Count);
+                //stopwatch.Stop();
+                //Debug.Log("디버깅2.  foundObjects - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
+                //stopwatch.Start();
 
+                Debug.Log("Debug3. Call ShowRecognitions");
                 ShowRecognitions(foundObjects, cameraTransform);
+
                 Destroy(texture);
                 Destroy(cameraTransform.gameObject);
 
-                stopwatch.Stop();
-                Debug.Log("디버깅5. While Loop - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
-                stopwatch.Reset();
+
+                Debug.Log("Debug4. Loop End");
+                //stopwatch.Stop();
+                //Debug.Log("디버깅3. Loop 끝 - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
+                //stopwatch.Reset();
 
             }
         }
@@ -102,7 +117,7 @@ namespace YoloHolo.YoloLabeling
 
         private void ShowRecognitions(List<YoloItem> recognitions, Transform cameraTransform)
         {
-            stopwatch2.Start();
+            Debug.Log("Debug3-1. ShowRecognitions Start");
             foreach (var recognition in recognitions)
             {
                 var newObj = new YoloGameObject(recognition, cameraTransform,
@@ -120,18 +135,17 @@ namespace YoloHolo.YoloLabeling
                 }
             }
 
-            //yoloGameObjects에서 생성된 지 오래된 (> labelNotSeenTimeOut =.5f = 5초) obj 제거
+            //yoloGameObjects에서 생성된 지 오래된 (> labelNotSeenTimeOut = 5f = 5초) obj 제거
             for (var i = yoloGameObjects.Count - 1; i >= 0; i--)
             {
-                if (Time.time - yoloGameObjects[i].TimeLastSeen > labelNotSeenTimeOut)
+                //if (Time.time - yoloGameObjects[i].TimeLastSeen > labelNotSeenTimeOut)
+                if (Time.time - yoloGameObjects[i].TimeLastSeen > 1.5f)
                 {
                     Destroy(yoloGameObjects[i].DisplayObject);
                     yoloGameObjects.RemoveAt(i);
                 }
             }
-            stopwatch2.Stop();
-            Debug.Log("디버깅4. ShowRecognitions - 시간 : " + stopwatch2.ElapsedMilliseconds + "ms");
-            stopwatch2.Reset();
+            Debug.Log("Debug3-2. ShowRecognitions End");
         }
 
         private bool HasBeenSeenBefore(YoloGameObject obj)
@@ -144,8 +158,7 @@ namespace YoloHolo.YoloLabeling
              
             var seenBefore = yoloGameObjects.FirstOrDefault(
                 ylo => ylo.Name == obj.Name &&
-                Vector3.Distance(obj.PositionInSpace.Value,
-                    ylo.PositionInSpace.Value) < minIdenticalLabelDistance);
+                Vector3.Distance(obj.PositionInSpace.Value, ylo.PositionInSpace.Value) < minIdenticalLabelDistance);
             if (seenBefore != null)
             {
                 seenBefore.TimeLastSeen = Time.time;

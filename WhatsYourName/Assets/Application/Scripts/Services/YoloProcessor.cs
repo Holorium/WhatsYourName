@@ -15,7 +15,9 @@ namespace YoloHolo.Services
         private IWorker worker;
 
         //Stopwatch 생성
-        System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+        System.Diagnostics.Stopwatch sw1 = new System.Diagnostics.Stopwatch();
+        System.Diagnostics.Stopwatch sw2 = new System.Diagnostics.Stopwatch();
+        float[] dummyOutput = new float[44100];
 
         public YoloProcessor(string name, uint priority, YoloProcessorProfile profile)
             : base(name, priority)
@@ -35,31 +37,45 @@ namespace YoloHolo.Services
 
         public async Task<List<YoloItem>> RecognizeObjects(Texture2D texture)
         {
+            Debug.Log("Debug2-1. Start RecognizeObjects");
+            sw1.Start();
             var inputTensor = new Tensor(texture, channels: profile.Channels);
             await Task.Delay(32);
 
-            stopwatch.Start();
+            Debug.Log("Debug2-2. Call ForwardAsync");
 
             // Run the model on the input tensor
             var outputTensor = await ForwardAsync(worker, inputTensor);
-
-            stopwatch.Stop();
-            Debug.Log("디버깅1. ForwardAsync 함수 - 시간 : " + stopwatch.ElapsedMilliseconds + "ms");
-            stopwatch.Reset();
+            //var outputTensor = new Tensor(1, 1, 7, 6300, dummyOutput);
+            //Debug.Log("**Output Tensor : " + outputTensor.ToString());
 
             inputTensor.Dispose();
+            
+            Debug.Log("Debug2-3. Call GetYoloData");
 
+            
             var yoloItems = outputTensor.GetYoloData(profile.ClassTranslator, 
                 profile.MinimumProbability, profile.OverlapThreshold);
 
             outputTensor.Dispose();
-            return yoloItems;
+            
 
+            //var yoloItems = new List<YoloItem>();
+
+            Debug.Log("Debug2-4. End RecognizeObjects");
+            sw1.Stop();
+            Debug.Log("** RecognizeObjects 시간 : " + sw1.ElapsedMilliseconds + "ms");
+            sw1.Reset();
+
+            return yoloItems;
         }
 
         // Nicked from https://github.com/Unity-Technologies/barracuda-release/issues/236#issue-1049168663
         public async Task<Tensor> ForwardAsync(IWorker modelWorker, Tensor inputs)
-        {   
+        {
+            Debug.Log("Debug2-2-1. Start ForwardAsync");
+            sw2.Start();
+
             var executor = worker.StartManualSchedule(inputs);
             var it = 0;
             bool hasMoreWork;
@@ -72,6 +88,12 @@ namespace YoloHolo.Services
                     await Task.Delay(32);
                 }
             } while (hasMoreWork);
+
+            Debug.Log("Debug2-2-2. End ForwardAsync");
+            sw2.Stop();
+            Debug.Log("** ForwardAsync 시간 : " + sw2.ElapsedMilliseconds + "ms");
+            sw2.Reset();
+
             return modelWorker.PeekOutput();
         }
 

@@ -16,9 +16,8 @@ namespace YoloHolo.YoloLabeling
 
         private static List<string> detectableObjects = new()
         {
-            "Black Spot Moray",
-            "Golden Trevally",
-            "Orbicular Batfish"
+            "Pacu",
+            "Redtail Catfish"
         };
     }
 }

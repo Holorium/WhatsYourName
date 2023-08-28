@@ -489,7 +489,7 @@ MonoBehaviour:
   requestedCameraSize: {x: 896, y: 504}
   yoloImageSize: {x: 160, y: 160}
   virtualProjectionPlaneWidth: 1.356
-  minIdenticalLabelDistance: 0.3
+  minIdenticalLabelDistance: 0.15
   labelNotSeenTimeOut: 1.5
   debugRenderer: {fileID: 2057650854}
 --- !u!4 &1819025809

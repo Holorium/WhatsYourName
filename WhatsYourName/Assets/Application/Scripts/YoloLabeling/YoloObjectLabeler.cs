@@ -116,7 +116,7 @@ namespace YoloHolo.YoloLabeling
         private void ShowRecognitions(List<YoloItem> recognitions, Transform cameraTransform)
         {
             Debug.Log("Debug3-1. ShowRecognitions Start");
-            /*
+            
             foreach (var recognition in recognitions)
             {
                 var newObj = new YoloGameObject(recognition, cameraTransform,
@@ -131,22 +131,21 @@ namespace YoloHolo.YoloLabeling
                     newObj.DisplayObject.transform.parent = transform;
                     var labelController = newObj.DisplayObject.GetComponent<ObjectLabelController>();
                     labelController.SetText(newObj.Name);
+                    Destroy(newObj.DisplayObject, labelNotSeenTimeOut);
                 }
             }
 
             //yoloGameObjects에서 생성된 지 오래된 (> labelNotSeenTimeOut = 5f = 5초) obj 제거
             for (var i = yoloGameObjects.Count - 1; i >= 0; i--)
             {
-                //if (Time.time - yoloGameObjects[i].TimeLastSeen > labelNotSeenTimeOut)
-                if (Time.time - yoloGameObjects[i].TimeLastSeen > 1.5f)
+                if (Time.time - yoloGameObjects[i].TimeLastSeen > labelNotSeenTimeOut)
                 {
-                    Destroy(yoloGameObjects[i].DisplayObject);
                     yoloGameObjects.RemoveAt(i);
                 }
             }
-            */
+            
 
-   
+/*
             foreach (var recognition in recognitions)
             {
                 var newObj = new YoloGameObject(recognition, cameraTransform,
@@ -166,7 +165,7 @@ namespace YoloHolo.YoloLabeling
             }
 
             yoloGameObjects.Clear();
-
+*/
             Debug.Log("Debug3-2. ShowRecognitions End");
         }
 

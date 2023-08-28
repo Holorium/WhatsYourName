@@ -23,7 +23,7 @@ namespace YoloHolo.Services
 
         [SerializeField]
         //private float overlapThreshold = 0.5f;
-        private float overlapThreshold = 0.45f;
+        private float overlapThreshold = 0.35f;
         public float OverlapThreshold => overlapThreshold;
 
         [SerializeField] 
